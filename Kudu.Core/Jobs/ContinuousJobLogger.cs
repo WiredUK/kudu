@@ -15,8 +15,8 @@ namespace Kudu.Core.Jobs
 
         private int _consoleLogLinesCount;
 
-        public ContinuousJobLogger(string jobName, IEnvironment environment, ITraceFactory traceFactory)
-            : base(jobName, Constants.ContinuousPath, GetStatusFileName(), JobLogFileName, environment, traceFactory)
+        public ContinuousJobLogger(string jobName, string continousJobType, IEnvironment environment, ITraceFactory traceFactory)
+            : base(jobName, continousJobType, GetStatusFileName(), JobLogFileName, environment, traceFactory)
         {
             // Lock status file (allowing read and write but not delete) as a way to notify that this status file is valid (shows status of a current working instance)
             ResetLockedStatusFile();

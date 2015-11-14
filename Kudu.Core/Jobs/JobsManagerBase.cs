@@ -27,7 +27,8 @@ namespace Kudu.Core.Jobs
             new PhpScriptHost(),
             new NodeScriptHost(),
             new DnxScriptHost(),
-            new FSharpScriptHost()
+            new FSharpScriptHost(),
+            new FunctionsScriptHost()
         };
 
         public static bool IsUsingSdk(string specificJobDataPath)
@@ -186,6 +187,7 @@ namespace Kudu.Core.Jobs
             var jobs = new List<TJob>();
 
             IEnumerable<DirectoryInfoBase> jobDirectories = ListJobDirectories(JobsBinariesPath);
+
             foreach (DirectoryInfoBase jobDirectory in jobDirectories)
             {
                 TJob job = BuildJob(jobDirectory);

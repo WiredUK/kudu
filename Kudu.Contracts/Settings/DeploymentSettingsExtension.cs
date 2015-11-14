@@ -211,5 +211,10 @@ namespace Kudu.Contracts.Settings
         {
             return settings.GetValue(SettingsKeys.TouchWebConfigAfterDeployment) != "0";
         }
+
+        public static string GetAzureWebJobsStorageConnectionString(this IDeploymentSettingsManager settings)
+        {
+            return settings.GetValue(SettingsKeys.AzureWebJobsStorage);
+        }
     }
 }

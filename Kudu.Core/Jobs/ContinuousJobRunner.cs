@@ -26,10 +26,10 @@ namespace Kudu.Core.Jobs
         private readonly string _disableFilePath;
         private bool _alwaysOnWarningLogged;
 
-        public ContinuousJobRunner(ContinuousJob continuousJob, IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory, IAnalytics analytics)
-            : base(continuousJob.Name, Constants.ContinuousPath, environment, settings, traceFactory, analytics)
+        public ContinuousJobRunner(ContinuousJob continuousJob, IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory traceFactory, IAnalytics analytics, string continousJobType = Constants.ContinuousPath)
+            : base(continuousJob.Name, continousJobType, environment, settings, traceFactory, analytics)
         {
-            _continuousJobLogger = new ContinuousJobLogger(continuousJob.Name, Environment, TraceFactory);
+            _continuousJobLogger = new ContinuousJobLogger(continuousJob.Name, continousJobType, Environment, TraceFactory);
             _continuousJobLogger.RolledLogFile += OnLogFileRolled;
 
             _disableFilePath = Path.Combine(continuousJob.JobBinariesRootPath, "disable.job");

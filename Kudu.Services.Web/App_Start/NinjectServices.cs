@@ -239,10 +239,19 @@ namespace Kudu.Services.Web.App_Start
                 kernel.Get<IDeploymentSettingsManager>(),
                 kernel.Get<IAnalytics>());
 
+            FunctionJobsManager functionJobsManager = new FunctionJobsManager(
+                noContextTraceFactory,
+                kernel.Get<IEnvironment>(),
+                kernel.Get<IDeploymentSettingsManager>(),
+                kernel.Get<IAnalytics>());
+
             triggeredJobsManager.CleanupDeletedJobs();
             continuousJobManager.CleanupDeletedJobs();
 
             kernel.Bind<IContinuousJobsManager>().ToConstant(continuousJobManager)
+                                 .InTransientScope();
+
+            kernel.Bind<FunctionJobsManager>().ToConstant(functionJobsManager)
                                  .InTransientScope();
 
             TriggeredJobsScheduler triggeredJobsScheduler = new TriggeredJobsScheduler(
@@ -497,6 +506,16 @@ namespace Kudu.Services.Web.App_Start
 
             // Web Jobs as microservice
             routes.MapHttpRoute("list-triggered-jobs-swagger", "api/triggeredwebjobsswagger", new { controller = "Jobs", action = "ListTriggeredJobsInSwaggerFormat" }, new { verb = new HttpMethodConstraint("GET") });
+
+            // Functions
+            routes.MapHttpRoute("get-functions-host-settings", "api/functions/config", new { controller = "Functions", action = "GetHostSettings" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("put-functions-host-settings", "api/functions/config", new { controller = "Functions", action = "PutHostSettings" }, new { verb = new HttpMethodConstraint("PUT") });
+            routes.MapHttpRoute("put-function", "api/functions/{name}", new { controller = "Functions", action = "CreateOrUpdate" }, new { verb = new HttpMethodConstraint("PUT") });
+            routes.MapHttpRoute("list-functions", "api/functions", new { controller = "Functions", action = "List" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("get-function", "api/functions/{name}", new { controller = "Functions", action = "Get" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("delete-function", "api/functions/{name}", new { controller = "Functions", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
+            routes.MapHttpRoute("run-function", "api/functions/{name}/run", new { controller = "Functions", action = "Run" }, new { verb = new HttpMethodConstraint("POST") });
+            routes.MapHttpRoute("get-function-run-status", "api/functions/{name}/status/{id}", new { controller = "Functions", action = "GetRunStatus" }, new { verb = new HttpMethodConstraint("GET") });
 
             // SiteExtensions
             routes.MapHttpRoute("api-get-remote-extensions", "api/extensionfeed", new { controller = "SiteExtension", action = "GetRemoteExtensions" }, new { verb = new HttpMethodConstraint("GET") });

@@ -36,6 +36,7 @@ namespace Kudu
         public const string JobsPath = "jobs";
         public const string ContinuousPath = "continuous";
         public const string TriggeredPath = "triggered";
+        public const string FunctionsJobPath = "functions";
 
         public const string DummyRazorExtension = ".kudu777";
 
@@ -92,5 +93,10 @@ namespace Kudu
 
         //Setting for VC++ for node builds
         public const string VCVersion = "2015";
+
+        public const string Functions = "functions";
+        public const string FunctionsConfigFile = "function.json";
+        public const string FunctionsHostConfigFile = "host.json";
+        public const string SampleFunctionData = "sample.dat";
     }
 }
