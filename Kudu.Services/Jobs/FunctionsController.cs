@@ -60,9 +60,37 @@ namespace Kudu.Services.Jobs
         {
             using (_tracer.Step($"FunctionsController.CreateOrUpdate({name})"))
             {
-                var config = await Request.Content.ReadAsAsync<JObject>();
-                var functionDir = FileSystemHelpers.EnsureDirectory(Path.Combine(_environment.FunctionsPath, name));
-                await FileSystemHelpers.WriteAllTextToFileAsync(Path.Combine(functionDir, Constants.FunctionsConfigFile), JsonConvert.SerializeObject(config));
+                var config = (await Request.Content.ReadAsAsync<JObject>()) ?? new JObject();
+                var functionDir = Path.Combine(_environment.FunctionsPath, name);
+                if (!FileSystemHelpers.DirectoryExists(functionDir))
+                {
+                    // create a new function
+                    functionDir = FileSystemHelpers.EnsureDirectory(functionDir);
+                    var template = (await GetTemplates()).FirstOrDefault(e => e.name.Equals(name, StringComparison.OrdinalIgnoreCase));
+                    if (template != null)
+                    {
+                        //deploy template from github
+                        using (var webClient = new WebClient())
+                        using (var httpClient = GetHttpClient())
+                        {
+                            var response = await httpClient.GetAsync(template.url);
+                            response.EnsureSuccessStatusCode();
+                            var files = await response.Content.ReadAsAsync<IEnumerable<GitHubContent>>();
+                            foreach (var file in files.Where(s => s.type.Equals("file", StringComparison.OrdinalIgnoreCase)))
+                            {
+                                await webClient.DownloadFileTaskAsync(new Uri(file.download_url), Path.Combine(functionDir, file.name));
+                            }
+                        }
+                    }
+                    else
+                    {
+                        await FileSystemHelpers.WriteAllTextToFileAsync(Path.Combine(functionDir, Constants.FunctionsConfigFile), JsonConvert.SerializeObject(config));
+                    }
+                }
+                else
+                {
+                    await FileSystemHelpers.WriteAllTextToFileAsync(Path.Combine(functionDir, Constants.FunctionsConfigFile), JsonConvert.SerializeObject(config));
+                }
                 return Request.CreateResponse(HttpStatusCode.Created, (object)await GetFunctionConfig(name));
             }
         }
@@ -77,9 +105,9 @@ namespace Kudu.Services.Jobs
                     .GetDirectories(_environment.FunctionsPath)
                     .Select(d => Path.Combine(d, Constants.FunctionsConfigFile))
                     .Where(FileSystemHelpers.FileExists)
-                    .Select(f => GetFunctionConfig(Path.GetFileName(Path.GetDirectoryName(f)))));
+                    .Select(async f => { try { return await GetFunctionConfig(Path.GetFileName(Path.GetDirectoryName(f))); } catch { return null; } }));
 
-                return Request.CreateResponse(HttpStatusCode.OK, configList);
+                return Request.CreateResponse(HttpStatusCode.OK, configList.Where(c => c != null ));
             }
         }
 
@@ -162,6 +190,15 @@ namespace Kudu.Services.Jobs
             }
         }
 
+        [HttpGet]
+        public async Task<HttpResponseMessage> GetFunctionsTemplates()
+        {
+            using (_tracer.Step("FunctionsController.GetFunctionsTemplates()"))
+            {
+                return Request.CreateResponse(HttpStatusCode.OK, await GetTemplates());
+            }
+        }
+
         public async Task<JObject> GetFunctionConfig(string name)
         {
             var path = Path.Combine(GetFunctionPath(name), Constants.FunctionsConfigFile);
@@ -188,6 +225,7 @@ namespace Kudu.Services.Jobs
         {
             var config = JObject.Parse(configContent);
             config["name"] = functionName;
+            config["script_root_path_href"] = FilePathToVfsUri(GetFunctionPath(functionName));
             config["script_href"] = FilePathToVfsUri(GetFunctionScriptPath(config));
             config["config_href"] = FilePathToVfsUri(Path.Combine(GetFunctionPath(functionName), Constants.FunctionsConfigFile));
             config["test_data_href"] = FilePathToVfsUri(GetFunctionSampleDataFile(functionName));
@@ -272,18 +310,50 @@ namespace Kudu.Services.Jobs
             throw new HttpResponseException(HttpStatusCode.NotFound);
         }
 
+        public static async Task<IEnumerable<GitHubContent>> GetTemplates()
+        {
+            using (var client = GetHttpClient())
+            {
+                var response = await client.GetAsync("https://api.github.com/repos/Azure/azure-webjobs-sdk-script/contents/sample");
+                response.EnsureSuccessStatusCode();
+                var content = await response.Content.ReadAsAsync<IEnumerable<GitHubContent>>();
+                return content.Where(s => s.type.Equals("dir", StringComparison.OrdinalIgnoreCase));
+            }
+        }
+
+        private static HttpClient GetHttpClient()
+        {
+            var client = new HttpClient();
+            client.DefaultRequestHeaders.Add("User-Agent", "Kudu/Api");
+            client.DefaultRequestHeaders.Add("Accept", "application/json");
+            return client;
+        }
+
         private static void EnsureScriptHostOnDisk(string path)
         {
             using (var client = new WebClient())
             {
                 Directory.CreateDirectory(path);
                 var downloadArchivePath = Path.Combine(path, "WebJobs.Script.Host.zip");
-                client.DownloadFile("https://github.com/Azure/azure-webjobs-sdk-script/releases/download/v1.0.0-alpha1-10019/WebJobs.Script.Host.zip", downloadArchivePath);
+                client.DownloadFile("https://github.com/Azure/azure-webjobs-sdk-script/releases/download/v1.0.0-alpha1-10021/WebJobs.Script.Host.zip", downloadArchivePath);
                 using (var archive = new ZipArchive(new FileStream(downloadArchivePath, FileMode.Open)))
                 {
                     archive.Extract(path);
                 }
             }
         }
+    }
+
+    public class GitHubContent
+    {
+        public string name { get; set; }
+        public string path { get; set; }
+        public string sha { get; set; }
+        public int size { get; set; }
+        public string url { get; set; }
+        public string html_url { get; set; }
+        public string git_url { get; set; }
+        public string download_url { get; set; }
+        public string type { get; set; }
     }
 }

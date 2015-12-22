@@ -1,0 +1,35 @@
+﻿@media (min-width: 992px) {
+    .modal-lg {
+        width: 1300px;
+    }
+}
+
+.sidebar {
+    float: left;
+    width: 150px;
+    padding-right: 10px
+}
+
+.content-wrap {
+    height: 65em;
+}
+
+.modal-content {
+    padding: 10px;
+}
+
+.save-container {
+    padding-bottom: 10px;
+}
+
+.save-button {
+    width: 140px;
+}
+
+.input-append .btn.dropdown-toggle {
+    float: none;
+}
+.spinner {
+    display: inline;
+    font-size: 20px;
+}

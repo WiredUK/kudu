@@ -510,6 +510,7 @@ namespace Kudu.Services.Web.App_Start
             // Functions
             routes.MapHttpRoute("get-functions-host-settings", "api/functions/config", new { controller = "Functions", action = "GetHostSettings" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpRoute("put-functions-host-settings", "api/functions/config", new { controller = "Functions", action = "PutHostSettings" }, new { verb = new HttpMethodConstraint("PUT") });
+            routes.MapHttpRoute("get-functions-templates", "api/functions/templates", new { controller = "Functions", action = "GetFunctionsTemplates" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpRoute("put-function", "api/functions/{name}", new { controller = "Functions", action = "CreateOrUpdate" }, new { verb = new HttpMethodConstraint("PUT") });
             routes.MapHttpRoute("list-functions", "api/functions", new { controller = "Functions", action = "List" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpRoute("get-function", "api/functions/{name}", new { controller = "Functions", action = "Get" }, new { verb = new HttpMethodConstraint("GET") });

@@ -9,7 +9,7 @@ namespace Kudu.Core.Jobs
 
         public FunctionsScriptHost()
             // TODO change to the final place of the script host.
-            : base(Path.Combine(Path.GetTempPath(), "WebJobs.Script.Host", "WebJobs.Script.Host.exe"))
+            : base(Path.Combine(Path.GetTempPath(), "WebJobs.Script.Host", "WebJobs.Script.Host.exe"), string.Empty)
         {
         }
 

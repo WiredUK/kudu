@@ -39,7 +39,10 @@ namespace Kudu.Core.Jobs
                 {
                     _hostJobRunner = new ContinuousJobRunner(hostJob, Environment, Settings, TraceFactory, Analytics, string.Empty);
                 }
-                _hostJobRunner.RefreshJob(hostJob, hostJob.Settings, logRefresh: !_jobsFileWatcher.FirstTimeMakingChanges);
+                if (_jobsFileWatcher.FirstTimeMakingChanges)
+                {
+                    _hostJobRunner.RefreshJob(hostJob, hostJob.Settings, logRefresh: !_jobsFileWatcher.FirstTimeMakingChanges);
+                }
             }
         }
 
