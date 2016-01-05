@@ -18,12 +18,15 @@
                 <div class="spinner">
                     <i data-bind="visible: creating()" class="fa fa-spinner fa-spin" title="Please wait"></i>
                 </div>
-                <div class="input-append btn-group">
-                    <input class="span2" data-bind="value: newFunctionName" style="height: 34px; margin-right: -10px" id="appendedInputButton" size="16" type="text">
-                    <a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#" style="margin-top: -2px">
+                <div class="btn-group">
+                    <input class="span2" placeholder="new function name" data-bind="value: newFunctionName" style="height: 34px;" size="16" type="text">
+                </div>
+                <div class="btn-group">
+                    <button class="btn dropdown-toggle" data-toggle="dropdown">
+                        <span data-bind="text: selectedTemplate() ? selectedTemplate().name : 'Select Template'"></span>
                         <span class="caret"></span>
-                    </a>
-                    <ul class="dropdown-menu">
+                    </button>
+                    <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu">
                         <li data-bind="foreach: templates"><a href="#" data-bind="click: $parent.selectTemplate, text: name"></a></li>
                     </ul>
                 </div>
@@ -60,9 +63,9 @@
                         <a href="#" style="color: #31708f; text-decoration: underline" role="button"
                            data-toggle="modal" data-target="#editFunctionModal" data-bind="text: name, click: $parent.editFunction"></a>
                     </div>
-                    <div class="panel-body">
+                    <!--<div class="panel-body">
                         <pre data-bind="text: ko.toJSON($data, null, 2)"></pre>
-                    </div>
+                    </div>-->
                 </div>
             </div>
         </div>
@@ -129,7 +132,7 @@
                                     <button class="btn btn-info button-top-left save-button text-center" type="button" data-bind="click: getStatus">Get Status</button>
                                 </div>
                                 <input type="text" style="width: 50%" data-bind="value: runId" />
-                                <pre data-bind="text: ko.toJSON(statusResponse, null, 2)"></pre>
+                                <pre data-bind="text: ko.toJSON(statusResponse, null, 2)" style="overflow: scroll; word-wrap: normal"></pre>
                             </div>
                         </div>
                     </div>

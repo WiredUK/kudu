@@ -7,8 +7,7 @@
     $(document).on("click", "#edit-files-tab", function () {
         if (!viewModel.editFunctionTab()) {
             viewModel.editFunctionTab(true);
-            var originalHeight = $("#editor").height();
-            $("#editor").css({ "height": originalHeight * 2 });
+            $("#editor").css({ "height": "100%" });
             editor.resize();
             viewModel.editFile(viewModel.currentFileObject());
         }
@@ -18,8 +17,7 @@
     $(document).on("click", "#run-function-tab", function () {
         if (viewModel.editFunctionTab()) {
             viewModel.editFunctionTab(false);
-            var originalHeight = $("#editor").height();
-            $("#editor").css({ "height": originalHeight / 2 });
+            $("#editor").css({ "height": "50%" });
             editor.resize();
             viewModel.editSampleData();
         }
@@ -43,6 +41,7 @@
         that.editFunctionTab = ko.observable(true);
         that.templates = ko.observableArray();
         that.creating = ko.observable(false);
+        that.selectedTemplate = ko.observable(undefined);
 
         that.editHostConfig = function () {
             that.files([{
@@ -142,11 +141,15 @@
         that.createNewFunction = function () {
             if (that.newFunctionName()) {
                 that.creating(true);
+                var data = that.selectedTemplate() && that.selectedTemplate().name !== "Empty"
+                    ? { template_id: that.selectedTemplate().name }
+                    : {};
                 $.ajax({
                     type: "PUT",
                     url: appRoot + "api/functions/" + that.newFunctionName(),
                     dataType: "json",
-                    data: "",
+                    data: JSON.stringify(data),
+                    contentType: "application/json",
                     success: function () {
                         that.getHostConfig();
                         that.getFunctions();
@@ -219,13 +222,14 @@
                 url: appRoot + "api/functions/templates",
                 dataType: "json",
                 success: function (data) {
+                    data.unshift({ name: "Empty" });
                     that.templates(data);
                 }
             });
         };
 
         that.selectTemplate = function (t) {
-            that.newFunctionName(t.name);
+            that.selectedTemplate(t);
         };
 
         that.getHostConfig();
@@ -237,6 +241,9 @@
     ko.applyBindings(viewModel)
 
     $("#editFunctionModal").on("hidden.bs.modal", function () {
+        viewModel.editFunctionTab(true);
+        $("#editor").css({ "height": "100%"});
+        editor.resize();
         viewModel.getHostConfig();
         viewModel.getFunctions();
         viewModel.runId("");

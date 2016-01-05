@@ -46,8 +46,6 @@ namespace Kudu.Services.Jobs
             }
         }
 
-
-
         public FunctionsController(ITracer tracer, IEnvironment environment, IDeploymentSettingsManager settings)
         {
             _tracer = tracer;
@@ -60,38 +58,41 @@ namespace Kudu.Services.Jobs
         {
             using (_tracer.Step($"FunctionsController.CreateOrUpdate({name})"))
             {
-                var config = (await Request.Content.ReadAsAsync<JObject>()) ?? new JObject();
+                var functionEnvelope = await Request.Content.ReadAsAsync<FunctionEnvelope>();
                 var functionDir = Path.Combine(_environment.FunctionsPath, name);
-                if (!FileSystemHelpers.DirectoryExists(functionDir))
+
+                // Assert templateId and value are both present
+                if (!string.IsNullOrEmpty(functionEnvelope?.TemplateId))
                 {
-                    // create a new function
-                    functionDir = FileSystemHelpers.EnsureDirectory(functionDir);
-                    var template = (await GetTemplates()).FirstOrDefault(e => e.name.Equals(name, StringComparison.OrdinalIgnoreCase));
+                    // check to create template.
+                    if (FileSystemHelpers.DirectoryExists(functionDir) &&
+                        FileSystemHelpers.GetFileSystemEntries(functionDir).Any())
+                    {
+                        return Request.CreateResponse(HttpStatusCode.Conflict, $"Function {name} already exist");
+                    }
+
+                    var template = (await GetTemplates()).FirstOrDefault(e => e.name.Equals(functionEnvelope.TemplateId, StringComparison.OrdinalIgnoreCase));
                     if (template != null)
                     {
-                        //deploy template from github
-                        using (var webClient = new WebClient())
-                        using (var httpClient = GetHttpClient())
-                        {
-                            var response = await httpClient.GetAsync(template.url);
-                            response.EnsureSuccessStatusCode();
-                            var files = await response.Content.ReadAsAsync<IEnumerable<GitHubContent>>();
-                            foreach (var file in files.Where(s => s.type.Equals("file", StringComparison.OrdinalIgnoreCase)))
-                            {
-                                await webClient.DownloadFileTaskAsync(new Uri(file.download_url), Path.Combine(functionDir, file.name));
-                            }
-                        }
+                        await DeployTemplateFromGithub(template, functionDir);
                     }
                     else
                     {
-                        await FileSystemHelpers.WriteAllTextToFileAsync(Path.Combine(functionDir, Constants.FunctionsConfigFile), JsonConvert.SerializeObject(config));
+                        return Request.CreateResponse(HttpStatusCode.NotFound, $"template: {functionEnvelope.TemplateId} was not found");
                     }
                 }
                 else
                 {
-                    await FileSystemHelpers.WriteAllTextToFileAsync(Path.Combine(functionDir, Constants.FunctionsConfigFile), JsonConvert.SerializeObject(config));
+                    // Create or update fuckin function
+                    if (!FileSystemHelpers.DirectoryExists(functionDir))
+                    {
+                        // create a new function
+                        FileSystemHelpers.EnsureDirectory(functionDir);
+                    }
+                    await FileSystemHelpers.WriteAllTextToFileAsync(Path.Combine(functionDir, Constants.FunctionsConfigFile), JsonConvert.SerializeObject(functionEnvelope?.Config ?? new JObject()));
                 }
-                return Request.CreateResponse(HttpStatusCode.Created, (object)await GetFunctionConfig(name));
+
+                return Request.CreateResponse(HttpStatusCode.Created, await GetFunctionConfig(name));
             }
         }
 
@@ -140,9 +141,9 @@ namespace Kudu.Services.Jobs
                 var functionConfig = await GetFunctionConfig(name);
                 var hostConfig = await GetHostConfig();
                 var queueName = $"azure-webjobs-host-{hostConfig["id"]}";
-                var queueMessage = new WebJobScriptHostInvokeMessage(functionConfig["name"].ToString());
+                var queueMessage = new WebJobScriptHostInvokeMessage(functionConfig.Name);
 
-                var inputName = functionConfig["bindings"]?["input"]?.FirstOrDefault()?["name"]?.ToString() ?? "input";
+                var inputName = functionConfig.Config["bindings"]?["input"]?.FirstOrDefault()?["name"]?.ToString() ?? "input";
                 queueMessage.Arguments[inputName] = await Request.Content.ReadAsStringAsync();
 
                 await storageHelper.AddQueueMessage(queueName, queueMessage);
@@ -157,7 +158,7 @@ namespace Kudu.Services.Jobs
             {
                 var functionConfig = await GetFunctionConfig(name);
                 var hostConfig = await GetHostConfig();
-                var blob = $"invocations/{hostConfig["id"]}/Host.Functions.{functionConfig["name"]}/{id}";
+                var blob = $"invocations/{hostConfig["id"]}/Host.Functions.{functionConfig.Name}/{id}";
                 var storageHelper = new WebJobStorageHelper(_settings);
 
                 var response = new HttpResponseMessage(HttpStatusCode.OK)
@@ -199,7 +200,7 @@ namespace Kudu.Services.Jobs
             }
         }
 
-        public async Task<JObject> GetFunctionConfig(string name)
+        public async Task<FunctionEnvelope> GetFunctionConfig(string name)
         {
             var path = Path.Combine(GetFunctionPath(name), Constants.FunctionsConfigFile);
             if (FileSystemHelpers.FileExists(path))
@@ -221,16 +222,19 @@ namespace Kudu.Services.Jobs
             throw new HttpResponseException(HttpStatusCode.NotFound);
         }
 
-        public JObject CreateFunctionConfig(string configContent, string functionName)
+        public FunctionEnvelope CreateFunctionConfig(string configContent, string functionName)
         {
             var config = JObject.Parse(configContent);
-            config["name"] = functionName;
-            config["script_root_path_href"] = FilePathToVfsUri(GetFunctionPath(functionName));
-            config["script_href"] = FilePathToVfsUri(GetFunctionScriptPath(config));
-            config["config_href"] = FilePathToVfsUri(Path.Combine(GetFunctionPath(functionName), Constants.FunctionsConfigFile));
-            config["test_data_href"] = FilePathToVfsUri(GetFunctionSampleDataFile(functionName));
-            config["href"] = GetFunctionHref(functionName);
-            return config;
+            return new FunctionEnvelope
+            {
+                Name = functionName,
+                ScriptRootPathHref = FilePathToVfsUri(GetFunctionPath(functionName)),
+                ScriptHref = FilePathToVfsUri(GetFunctionScriptPath(functionName, config)),
+                ConfigHref = FilePathToVfsUri(Path.Combine(GetFunctionPath(functionName), Constants.FunctionsConfigFile)),
+                TestDataHref = FilePathToVfsUri(GetFunctionSampleDataFile(functionName)),
+                Href = GetFunctionHref(functionName),
+                Config = config
+            };
         }
 
         private string GetFunctionSampleDataFile(string functionName)
@@ -240,9 +244,9 @@ namespace Kudu.Services.Jobs
 
         // Logic for this function is copied from here
         // https://github.com/Azure/azure-webjobs-sdk-script/blob/e0a783e882dd8680bf23e3c8818fb9638071c21d/src/WebJobs.Script/Config/ScriptHost.cs#L113-L150
-        private string GetFunctionScriptPath(JObject functionInfo)
+        private string GetFunctionScriptPath(string functionName, JObject functionInfo)
         {
-            var functionPath = GetFunctionPath(functionInfo["name"].ToString());
+            var functionPath = GetFunctionPath(functionName);
             var functionFiles = FileSystemHelpers.GetFiles(functionPath, "*.*", SearchOption.TopDirectoryOnly)
                 .Where(p => Path.GetFileName(p).ToLowerInvariant() != "function.json").ToArray();
 
@@ -339,6 +343,23 @@ namespace Kudu.Services.Jobs
                 using (var archive = new ZipArchive(new FileStream(downloadArchivePath, FileMode.Open)))
                 {
                     archive.Extract(path);
+                }
+            }
+        }
+
+        private async static Task DeployTemplateFromGithub(GitHubContent template, string functionDir)
+        {
+            //deploy template from github
+            FileSystemHelpers.EnsureDirectory(functionDir);
+            using (var webClient = new WebClient())
+            using (var httpClient = GetHttpClient())
+            {
+                var response = await httpClient.GetAsync(template.url);
+                response.EnsureSuccessStatusCode();
+                var files = await response.Content.ReadAsAsync<IEnumerable<GitHubContent>>();
+                foreach (var file in files.Where(s => s.type.Equals("file", StringComparison.OrdinalIgnoreCase)))
+                {
+                    await webClient.DownloadFileTaskAsync(new Uri(file.download_url), Path.Combine(functionDir, file.name));
                 }
             }
         }
