@@ -228,7 +228,7 @@ namespace Kudu.Services.Jobs
             return new FunctionEnvelope
             {
                 Name = functionName,
-                ScriptRootPathHref = FilePathToVfsUri(GetFunctionPath(functionName)),
+                ScriptRootPathHref = FilePathToVfsUri(GetFunctionPath(functionName), isDirectory: true),
                 ScriptHref = FilePathToVfsUri(GetFunctionScriptPath(functionName, config)),
                 ConfigHref = FilePathToVfsUri(Path.Combine(GetFunctionPath(functionName), Constants.FunctionsConfigFile)),
                 TestDataHref = FilePathToVfsUri(GetFunctionSampleDataFile(functionName)),
@@ -290,11 +290,11 @@ namespace Kudu.Services.Jobs
             }
         }
 
-        public Uri FilePathToVfsUri(string filePath)
+        public Uri FilePathToVfsUri(string filePath, bool isDirectory = false)
         {
             var baseUrl = Request.RequestUri.GetLeftPart(UriPartial.Authority);
             filePath = filePath.Substring(_environment.RootPath.Length).Trim('\\').Replace("\\", "/");
-            return new Uri($"{baseUrl}/api/vfs/{filePath}");
+            return new Uri($"{baseUrl}/api/vfs/{filePath}{(isDirectory ? "/" : string.Empty)}");
         }
 
         public Uri GetFunctionHref(string functionName)
