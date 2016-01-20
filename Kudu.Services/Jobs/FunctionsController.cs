@@ -192,11 +192,11 @@ namespace Kudu.Services.Jobs
         }
 
         [HttpGet]
-        public async Task<HttpResponseMessage> GetFunctionsTemplates()
+        public HttpResponseMessage GetFunctionsTemplates()
         {
             using (_tracer.Step("FunctionsController.GetFunctionsTemplates()"))
             {
-                return Request.CreateResponse(HttpStatusCode.OK, await GetTemplates());
+                return Request.CreateResponse(HttpStatusCode.OK, GetMockTemplates());
             }
         }
 
@@ -312,6 +312,22 @@ namespace Kudu.Services.Jobs
             }
 
             throw new HttpResponseException(HttpStatusCode.NotFound);
+        }
+
+        public static IEnumerable<FunctionTemplate> GetMockTemplates()
+        {
+            yield return new FunctionTemplate { Id = "BlobTrigger", Language = "JavaScript", Trigger = "Blob" };
+            yield return new FunctionTemplate { Id = "QueueTrigger-Bash", Language = "Bash", Trigger = "Queue" };
+            yield return new FunctionTemplate { Id = "QueueTrigger-Batch", Language = "Batch", Trigger = "Queue" };
+            yield return new FunctionTemplate { Id = "QueueTrigger-FSharp", Language = "F#", Trigger = "Queue" };
+            yield return new FunctionTemplate { Id = "QueueTrigger-Php", Language = "Php", Trigger = "Queue" };
+            yield return new FunctionTemplate { Id = "QueueTrigger-Powershell", Language = "PowerShell", Trigger = "Queue" };
+            yield return new FunctionTemplate { Id = "QueueTrigger-Python", Language = "Python", Trigger = "Queue" };
+            yield return new FunctionTemplate { Id = "QueueTrigger", Language = "JavaScript", Trigger = "Queue" };
+            yield return new FunctionTemplate { Id = "ResizeImage", Language = "Batch", Trigger = "Queue" };
+            yield return new FunctionTemplate { Id = "ServiceBusQueueTrigger", Language = "JavaScript", Trigger = "ServiceBus" };
+            yield return new FunctionTemplate { Id = "TimerTrigger", Language = "JavaScript", Trigger = "Timer" };
+            yield return new FunctionTemplate { Id = "WebHookTrigger", Language = "JavaScript", Trigger = "WebHook" };
         }
 
         public static async Task<IEnumerable<GitHubContent>> GetTemplates()

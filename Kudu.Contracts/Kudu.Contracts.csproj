@@ -130,6 +130,7 @@
     <Compile Include="Infrastructure\StringUtils.cs" />
     <Compile Include="Jobs\ContinuousJob.cs" />
     <Compile Include="Jobs\FunctionEnvelope.cs" />
+    <Compile Include="Jobs\FunctionTemplate.cs" />
     <Compile Include="Jobs\WebJobScriptHostInvokeMessage.cs" />
     <Compile Include="Settings\DiagnosticsSettings.cs" />
     <Compile Include="Jobs\JobSettings.cs" />
