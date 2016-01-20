@@ -150,6 +150,7 @@
     <Content Include="Content\Images\Kudu.svg" />
     <Content Include="Content\Images\Windows Azure Web Site.png" />
     <Content Include="Content\Images\paKman.gif" />
+    <Content Include="Content\Scripts\Functions.js" />
     <Content Include="Content\Scripts\HelperScript.js" />
     <Content Include="Content\Scripts\jquery.contextMenu.js" />
     <Content Include="Content\Scripts\KuduExec.js" />
@@ -160,6 +161,7 @@
     <Content Include="Content\Scripts\jquery-console\jquery.console.js" />
     <Content Include="Content\Scripts\KuduExecV2.js" />
     <Content Include="Content\Scripts\FileBrowser.js" />
+    <Content Include="Content\Styles\Functions.css" />
     <Content Include="Content\Styles\jquery-ui-1.10.0.custom.css" />
     <Content Include="Content\Styles\jquery.contextMenu.css" />
     <Content Include="Content\Styles\ProcessExplorer.css" />
@@ -215,6 +217,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Functions\Default.cshtml" />
     <None Include="packages.config" />
     <Content Include="ProcessExplorer\Default.cshtml" />
     <None Include="Properties\PublishProfiles\Local.pubxml" />

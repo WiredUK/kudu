@@ -92,5 +92,10 @@ namespace Kudu
 
         //Setting for VC++ for node builds
         public const string VCVersion = "2015";
+
+        public const string Functions = "functions";
+        public const string FunctionsConfigFile = "function.json";
+        public const string FunctionsHostConfigFile = "host.json";
+        public const string SampleFunctionData = "sample.dat";
     }
 }

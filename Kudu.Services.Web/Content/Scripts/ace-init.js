@@ -133,3 +133,16 @@ $('#fileList').on('click', '.glyphicon-pencil', function () {
         }
     }
 });
+
+editor.setSyntaxForFunction = function (fileName) {
+    var modelist = ace.require('ace/ext/modelist');
+    var mode = modelist.getModeForPath(fileName).mode;
+    if (mode === 'ace/mode/text') {
+        mode = getCustomMode(fileName);
+    }
+    // Apply computed syntax mode or default to 'ace/mode/text'
+    editor.session.setMode(mode);
+    // Set Ace height
+    //resizeAce();
+    editor.focus();
+};

@@ -309,5 +309,13 @@ namespace Kudu.Core
             [return: MarshalAs(UnmanagedType.Bool)]
             public static extern bool GetDiskFreeSpaceEx(string path, out ulong freeBytes, out ulong totalBytes, out ulong diskFreeBytes);
         }
+
+        public string FunctionsPath
+        {
+            get
+            {
+                return this.WebRootPath;
+            }
+        }
     }
 }

@@ -498,6 +498,15 @@ namespace Kudu.Services.Web.App_Start
             // Web Jobs as microservice
             routes.MapHttpRoute("list-triggered-jobs-swagger", "api/triggeredwebjobsswagger", new { controller = "Jobs", action = "ListTriggeredJobsInSwaggerFormat" }, new { verb = new HttpMethodConstraint("GET") });
 
+            // Functions
+            routes.MapHttpRoute("get-functions-host-settings", "api/functions/config", new { controller = "Functions", action = "GetHostSettings" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("put-functions-host-settings", "api/functions/config", new { controller = "Functions", action = "PutHostSettings" }, new { verb = new HttpMethodConstraint("PUT") });
+            routes.MapHttpRoute("get-functions-templates", "api/functions/templates", new { controller = "Functions", action = "GetFunctionsTemplates" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("put-function", "api/functions/{name}", new { controller = "Functions", action = "CreateOrUpdate" }, new { verb = new HttpMethodConstraint("PUT") });
+            routes.MapHttpRoute("list-functions", "api/functions", new { controller = "Functions", action = "List" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("get-function", "api/functions/{name}", new { controller = "Functions", action = "Get" }, new { verb = new HttpMethodConstraint("GET") });
+            routes.MapHttpRoute("delete-function", "api/functions/{name}", new { controller = "Functions", action = "Delete" }, new { verb = new HttpMethodConstraint("DELETE") });
+
             // SiteExtensions
             routes.MapHttpRoute("api-get-remote-extensions", "api/extensionfeed", new { controller = "SiteExtension", action = "GetRemoteExtensions" }, new { verb = new HttpMethodConstraint("GET") });
             routes.MapHttpRoute("api-get-remote-extension", "api/extensionfeed/{id}", new { controller = "SiteExtension", action = "GetRemoteExtension" }, new { verb = new HttpMethodConstraint("GET") });
