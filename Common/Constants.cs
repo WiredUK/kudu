@@ -96,6 +96,7 @@ namespace Kudu
         public const string Functions = "functions";
         public const string FunctionsConfigFile = "function.json";
         public const string FunctionsHostConfigFile = "host.json";
-        public const string SampleFunctionData = "sample.dat";
+        public const string Secrets = "secrets";
+        public const string SampleData = "sampledata";
     }
 }

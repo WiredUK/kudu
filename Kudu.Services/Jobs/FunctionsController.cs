@@ -21,13 +21,11 @@ namespace Kudu.Services.Jobs
     {
         private readonly ITracer _tracer;
         private readonly IEnvironment _environment;
-        private readonly IDeploymentSettingsManager _settings;
 
-        public FunctionsController(ITracer tracer, IEnvironment environment, IDeploymentSettingsManager settings)
+        public FunctionsController(ITracer tracer, IEnvironment environment)
         {
             _tracer = tracer;
             _environment = environment;
-            _settings = settings;
         }
 
         [HttpPut]
@@ -171,6 +169,7 @@ namespace Kudu.Services.Jobs
                 ScriptHref = FilePathToVfsUri(GetFunctionScriptPath(functionName, config)),
                 ConfigHref = FilePathToVfsUri(Path.Combine(GetFunctionPath(functionName), Constants.FunctionsConfigFile)),
                 TestDataHref = FilePathToVfsUri(GetFunctionSampleDataFile(functionName)),
+                SecretsFileHref = FilePathToVfsUri(GetFunctionSecretsFile(functionName)),
                 Href = GetFunctionHref(functionName),
                 Config = config
             };
@@ -178,7 +177,12 @@ namespace Kudu.Services.Jobs
 
         private string GetFunctionSampleDataFile(string functionName)
         {
-            return Path.Combine(_environment.JobsDataPath, Constants.Functions, functionName, Constants.SampleFunctionData);
+            return Path.Combine(_environment.DataPath, Constants.Functions, Constants.SampleData, $"{functionName}.dat");
+        }
+
+        private string GetFunctionSecretsFile(string functionName)
+        {
+            return Path.Combine(_environment.DataPath, Constants.Functions, Constants.Secrets, $"{functionName}.json");
         }
 
         // Logic for this function is copied from here
@@ -255,6 +259,8 @@ namespace Kudu.Services.Jobs
 
         public static IEnumerable<FunctionTemplate> GetMockTemplates()
         {
+            yield return new FunctionTemplate { Id = "HttpTrigger", Language = "JavaScript", Trigger = "Http" };
+            yield return new FunctionTemplate { Id = "HttpTrigger-Batch", Language = "Batch", Trigger = "Http" };
             yield return new FunctionTemplate { Id = "BlobTrigger", Language = "JavaScript", Trigger = "Blob" };
             yield return new FunctionTemplate { Id = "QueueTrigger-Bash", Language = "Bash", Trigger = "Queue" };
             yield return new FunctionTemplate { Id = "QueueTrigger-Batch", Language = "Batch", Trigger = "Queue" };
@@ -263,17 +269,17 @@ namespace Kudu.Services.Jobs
             yield return new FunctionTemplate { Id = "QueueTrigger-Powershell", Language = "PowerShell", Trigger = "Queue" };
             yield return new FunctionTemplate { Id = "QueueTrigger-Python", Language = "Python", Trigger = "Queue" };
             yield return new FunctionTemplate { Id = "QueueTrigger", Language = "JavaScript", Trigger = "Queue" };
-            yield return new FunctionTemplate { Id = "ResizeImage", Language = "Batch", Trigger = "Queue" };
+            yield return new FunctionTemplate { Id = "ResizeImage", Language = "exe", Trigger = "Queue" };
             yield return new FunctionTemplate { Id = "ServiceBusQueueTrigger", Language = "JavaScript", Trigger = "ServiceBus" };
             yield return new FunctionTemplate { Id = "TimerTrigger", Language = "JavaScript", Trigger = "Timer" };
-            yield return new FunctionTemplate { Id = "WebHookTrigger", Language = "JavaScript", Trigger = "WebHook" };
+            yield return new FunctionTemplate { Id = "WebHook", Language = "JavaScript", Trigger = "WebHook" };
         }
 
         public static async Task<IEnumerable<GitHubContent>> GetTemplates()
         {
             using (var client = GetHttpClient())
             {
-                var response = await client.GetAsync("https://api.github.com/repos/Azure/azure-webjobs-sdk-script/contents/sample");
+                var response = await client.GetAsync("https://api.github.com/repos/Azure/azure-webjobs-sdk-script/contents/sample?ref=http");
                 response.EnsureSuccessStatusCode();
                 var content = await response.Content.ReadAsAsync<IEnumerable<GitHubContent>>();
                 return content.Where(s => s.type.Equals("dir", StringComparison.OrdinalIgnoreCase));
