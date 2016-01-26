@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Kudu.Contracts.Settings;
+using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
 
 namespace Kudu.Core.Deployment.Generator
@@ -95,7 +96,7 @@ namespace Kudu.Core.Deployment.Generator
                 return Path.Combine(_environment.ScriptPath, "nuget.exe");
             }
         }
-        
+
         private string SelectNodeVersionCommand
         {
             get
@@ -121,7 +122,14 @@ namespace Kudu.Core.Deployment.Generator
         {
             get
             {
-                return Path.Combine(_environment.ScriptPath, StarterScriptName);
+                if (OSDetecter.IsCurrentOSWindows())
+                {
+                    return Path.Combine(_environment.ScriptPath, StarterScriptName);
+                }
+                else
+                {
+                    return "/bin/bash";
+                }
             }
         }
 

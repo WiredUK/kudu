@@ -26,6 +26,7 @@ namespace Kudu.Console
     {
         private static int Main(string[] args)
         {
+            System.Console.WriteLine("*** Calling Kudu.exe ***");   // REMOVE ME ONCE LINUX WORK IS DONE
             // Turn flag on in app.config to wait for debugger on launch
             if (ConfigurationManager.AppSettings["WaitForDebuggerOnStart"] == "true")
             {
@@ -60,6 +61,11 @@ namespace Kudu.Console
             string wapTargets = args[1];
             string deployer = args.Length == 2 ? null : args[2];
 
+            // REMOVE ME ONCE LINUX WORK IS DONE
+            System.Console.WriteLine("appRoot: {0}", appRoot);
+            System.Console.WriteLine("wapTargets: {0}", wapTargets);
+            System.Console.WriteLine("deployer: {0}", deployer);
+
             IEnvironment env = GetEnvironment(appRoot);
             ISettings settings = new XmlSettings.Settings(GetSettingsPath(env));
             IDeploymentSettingsManager settingsManager = new DeploymentSettingsManager(settings);
@@ -79,6 +85,7 @@ namespace Kudu.Console
             string hooksLockPath = Path.Combine(lockPath, Constants.HooksLockFile);
 
             IOperationLock deploymentLock = new LockFile(deploymentLockPath, traceFactory);
+
             IOperationLock statusLock = new LockFile(statusLockPath, traceFactory);
             IOperationLock hooksLock = new LockFile(hooksLockPath, traceFactory);
 
@@ -189,10 +196,14 @@ namespace Kudu.Console
             // REVIEW: this looks wrong because it ignores SCM_REPOSITORY_PATH
             string repositoryPath = Path.Combine(siteRoot, Constants.RepositoryPath);
 
-            string binPath = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
+            string binPath = System.Environment.GetEnvironmentVariable("SCM_BIN_PATH");
+            if (string.IsNullOrWhiteSpace(binPath))
+            {
+                binPath = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName);
+            }
 
-            return new Kudu.Core.Environment(root, 
-                binPath, 
+            return new Kudu.Core.Environment(root,
+                binPath,
                 repositoryPath);
         }
     }

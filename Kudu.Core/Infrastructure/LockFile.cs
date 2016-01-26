@@ -5,6 +5,7 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using Kudu.Contracts.Infrastructure;
+using Kudu.Core.Helpers;
 using Kudu.Core.Tracing;
 
 namespace Kudu.Core.Infrastructure
@@ -16,7 +17,7 @@ namespace Kudu.Core.Infrastructure
     public class LockFile : IOperationLock
     {
         private const string NotEnoughSpaceText = "There is not enough space on the disk.";
-        
+
         private readonly string _path;
         private readonly ITraceFactory _traceFactory;
 
@@ -70,6 +71,14 @@ namespace Kudu.Core.Infrastructure
         {
             get
             {
+                if (!OSDetecter.IsCurrentOSWindows())
+                {
+                    // BUGGY!!!
+                    // Mono does NOT support file lock accross process, we use file exist as work-around till we find a better way
+                    // https://bugzilla.xamarin.com/show_bug.cgi?id=38201
+                    return FileSystemHelpers.FileExists(_path);
+                }
+                
                 // If there's no file then there's no process holding onto it
                 if (!FileSystemHelpers.FileExists(_path))
                 {

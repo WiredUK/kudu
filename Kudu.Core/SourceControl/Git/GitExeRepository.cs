@@ -173,12 +173,16 @@ fi" + "\n";
                 {
                     FileSystemHelpers.EnsureDirectory(Path.GetDirectoryName(PostReceiveHookPath));
 
-                    string content = @"#!/bin/sh
-read i
-echo $i > pushinfo
-" + KnownEnvironment.KUDUCOMMAND + "\n";
-
-                    File.WriteAllText(PostReceiveHookPath, content);
+                    //#!/bin/sh
+                    //read i
+                    //echo $i > pushinfo
+                    //KnownEnvironment.KUDUCOMMAND
+                    StringBuilder sb = new StringBuilder();
+                    sb.AppendLine("#!/bin/sh");
+                    sb.AppendLine("read i");
+                    sb.AppendLine("echo $i > pushinfo");
+                    sb.AppendLine("/usr/bin/mono " + KnownEnvironment.KUDUCOMMAND);
+                    File.WriteAllText(PostReceiveHookPath, sb.ToString().Replace("\r\n", "\n"));
                 }
 
                 // NOTE: don't add any new init steps after creating the post receive hook,

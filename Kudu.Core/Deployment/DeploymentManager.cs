@@ -10,6 +10,7 @@ using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
 using Kudu.Core.Deployment.Generator;
+using Kudu.Core.Helpers;
 using Kudu.Core.Hooks;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Settings;
@@ -20,7 +21,7 @@ namespace Kudu.Core.Deployment
 {
     public class DeploymentManager : IDeploymentManager
     {
-        public const string DeploymentScriptFileName = "deploy.cmd";
+        public readonly static string DeploymentScriptFileName = OSDetecter.IsCurrentOSWindows() ? "deploy.cmd" : "deploy.sh";
 
         private static readonly Random _random = new Random();
 
@@ -178,7 +179,6 @@ namespace Kudu.Core.Deployment
                 try
                 {
                     deployStep = tracer.Step("DeploymentManager.Deploy(id)");
-
                     // Remove the old log file for this deployment id
                     string logPath = GetLogPath(id);
                     FileSystemHelpers.DeleteFileSafe(logPath);
@@ -610,7 +610,6 @@ namespace Kudu.Core.Deployment
                     {
                         await builder.Build(context);
                         builder.PostBuild(context);
-
                         if (_settings.TouchWebConfigAfterDeployment())
                         {
                             TryTouchWebConfig(context);

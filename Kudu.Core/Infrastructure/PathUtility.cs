@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Kudu.Core.Helpers;
 using SystemEnvironment = System.Environment;
 
 namespace Kudu.Core.Infrastructure
@@ -51,18 +52,33 @@ namespace Kudu.Core.Infrastructure
 
         internal static string ResolveGitPath()
         {
+            if (!OSDetecter.IsCurrentOSWindows())
+            {
+                return "/usr/bin/git";
+            }
+
             string relativePath = Path.Combine("Git", "bin", "git.exe");
             return ResolveRelativePathToProgramFiles(relativePath, relativePath, Resources.Error_FailedToLocateGit);
         }
 
         internal static string ResolveHgPath()
         {
+            if (!OSDetecter.IsCurrentOSWindows())
+            {
+                return "/usr/bin/hg";
+            }
+
             string relativePath = Path.Combine("Mercurial", "hg.exe");
             return ResolveRelativePathToProgramFiles(relativePath, relativePath, Resources.Error_FailedToLocateHg);
         }
 
         internal static string ResolveSSHPath()
         {
+            if (!OSDetecter.IsCurrentOSWindows())
+            {
+                return "/usr/bin/ssh";
+            }
+
             // version that before 2.5, ssh.exe has different path than in version 2.5
             string relativeX86Path = Path.Combine("Git", "bin", "ssh.exe");
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
@@ -78,12 +94,22 @@ namespace Kudu.Core.Infrastructure
 
         internal static string ResolveBashPath()
         {
+            if (!OSDetecter.IsCurrentOSWindows())
+            {
+                return "/bin/bash";
+            }
+
             string relativePath = Path.Combine("Git", "bin", "bash.exe");
             return ResolveRelativePathToProgramFiles(relativePath, relativePath, Resources.Error_FailedToLocateBash);
         }
 
         internal static string ResolveNpmJsPath()
         {
+            if (!OSDetecter.IsCurrentOSWindows())
+            {
+                return "/usr/bin/npm";
+            }
+
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
             string npmCliPath = Path.Combine("node_modules", "npm", "bin", "npm-cli.js");
             string npmVersion = ResolveNpmVersion();
@@ -111,6 +137,11 @@ namespace Kudu.Core.Infrastructure
 
         internal static string ResolveMSBuildPath()
         {
+            if (!OSDetecter.IsCurrentOSWindows())
+            {
+                return "/usr/bin/xbuild";
+            }
+
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
             return Path.Combine(programFiles, @"MSBuild", "14.0", "Bin", "MSBuild.exe");
         }
@@ -129,6 +160,11 @@ namespace Kudu.Core.Infrastructure
 
         internal static string ResolveNpmGlobalPrefix()
         {
+            if (!OSDetecter.IsCurrentOSWindows())
+            {
+                return "/usr/share/npm";
+            }
+
             string appDataDirectory = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ApplicationData);
             return Path.Combine(appDataDirectory, "npm");
         }
@@ -207,6 +243,11 @@ namespace Kudu.Core.Infrastructure
 
         internal static List<string> ResolveNodeNpmPaths()
         {
+            if (!OSDetecter.IsCurrentOSWindows())
+            {
+                return new List<string>() { "/usr/bin" };
+            }
+
             var paths = new List<string>();
             string programFiles = SystemEnvironment.GetFolderPath(SystemEnvironment.SpecialFolder.ProgramFilesX86);
             bool fromAppSetting;
@@ -245,6 +286,11 @@ namespace Kudu.Core.Infrastructure
 
         internal static bool PathsEquals(string path1, string path2)
         {
+            if (!OSDetecter.IsCurrentOSWindows())
+            {
+                return String.Equals(CleanPath(path1), CleanPath(path2), StringComparison.Ordinal);
+            }
+
             if (path1 == null)
             {
                 return path2 == null;
@@ -255,16 +301,31 @@ namespace Kudu.Core.Infrastructure
 
         internal static string ResolveBowerPath()
         {
+            if (!OSDetecter.IsCurrentOSWindows())
+            {
+                return "/usr/local/bin/bower";
+            }
+
             return ResolveNpmToolsPath("bower");
         }
 
         internal static string ResolveGulpPath()
         {
+            if (!OSDetecter.IsCurrentOSWindows())
+            {
+                return "/usr/local/bin/gulp";
+            }
+
             return ResolveNpmToolsPath("gulp");
         }
 
         internal static string ResolveGruntPath()
         {
+            if (!OSDetecter.IsCurrentOSWindows())
+            {
+                return "/usr/local/bin/grunt";
+            }
+
             return ResolveNpmToolsPath("grunt");
         }
 
