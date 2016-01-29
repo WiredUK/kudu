@@ -272,7 +272,8 @@ namespace Kudu.Services.Jobs
             yield return new FunctionTemplate { Id = "ResizeImage", Language = "exe", Trigger = "Queue" };
             yield return new FunctionTemplate { Id = "ServiceBusQueueTrigger", Language = "JavaScript", Trigger = "ServiceBus" };
             yield return new FunctionTemplate { Id = "TimerTrigger", Language = "JavaScript", Trigger = "Timer" };
-            yield return new FunctionTemplate { Id = "WebHook", Language = "JavaScript", Trigger = "WebHook" };
+            yield return new FunctionTemplate { Id = "WebHook-Generic", Language = "JavaScript", Trigger = "WebHook-Generic" };
+            yield return new FunctionTemplate { Id = "WebHook-GitHub", Language = "JavaScript", Trigger = "WebHook-GitHub" };
         }
 
         public static async Task<IEnumerable<GitHubContent>> GetTemplates()
