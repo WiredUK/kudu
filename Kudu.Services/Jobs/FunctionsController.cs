@@ -283,7 +283,7 @@ namespace Kudu.Services.Jobs
         {
             using (var client = GetHttpClient())
             {
-                var response = await client.GetAsync("https://api.github.com/repos/Azure/azure-webjobs-sdk-script/contents/sample");
+                var response = await client.GetAsync("https://api.github.com/repos/Azure/azure-webjobs-sdk-script/contents/sample?ref=0fc45ab7b5168588fe40955c12033a2d0ae3c8e0");
                 response.EnsureSuccessStatusCode();
                 var content = await response.Content.ReadAsAsync<IEnumerable<GitHubContent>>();
                 return content.Where(s => s.type.Equals("dir", StringComparison.OrdinalIgnoreCase));
