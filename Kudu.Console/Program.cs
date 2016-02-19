@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Abstractions;
 using Kudu.Console.Services;
 using Kudu.Contracts.Infrastructure;
 using Kudu.Contracts.Settings;
@@ -17,7 +16,6 @@ using Kudu.Core.Settings;
 using Kudu.Core.SourceControl;
 using Kudu.Core.SourceControl.Git;
 using Kudu.Core.Tracing;
-using Kudu.Services;
 using XmlSettings;
 
 namespace Kudu.Console
@@ -52,26 +50,13 @@ namespace Kudu.Console
             System.Console.Error.NewLine = "\n";
             System.Console.Out.NewLine = "\n";
 
-            System.Environment.SetEnvironmentVariable("GIT_DIR", null, System.EnvironmentVariableTarget.Process);
-
-            // Skip SSL Certificate Validate
-            OperationClient.SkipSslValidationIfNeeded();
-
             string appRoot = args[0];
             string wapTargets = args[1];
             string deployer = args.Length == 2 ? null : args[2];
 
-            // REMOVE ME ONCE LINUX WORK IS DONE
-            System.Console.WriteLine("appRoot: {0}", appRoot);
-            System.Console.WriteLine("wapTargets: {0}", wapTargets);
-            System.Console.WriteLine("deployer: {0}", deployer);
-
             IEnvironment env = GetEnvironment(appRoot);
             ISettings settings = new XmlSettings.Settings(GetSettingsPath(env));
             IDeploymentSettingsManager settingsManager = new DeploymentSettingsManager(settings);
-
-            // Adjust repo path
-            env.RepositoryPath = Path.Combine(env.SiteRootPath, settingsManager.GetRepositoryPath());
 
             // Setup the trace
             TraceLevel level = settingsManager.GetTraceLevel();
@@ -81,10 +66,48 @@ namespace Kudu.Console
             // Calculate the lock path
             string lockPath = Path.Combine(env.SiteRootPath, Constants.LockPath);
             string deploymentLockPath = Path.Combine(lockPath, Constants.DeploymentLockFile);
-            string statusLockPath = Path.Combine(lockPath, Constants.StatusLockFile);
-            string hooksLockPath = Path.Combine(lockPath, Constants.HooksLockFile);
 
             IOperationLock deploymentLock = new LockFile(deploymentLockPath, traceFactory);
+
+            if (deploymentLock.IsHeld)
+            {
+                return PerformDeploy(appRoot, wapTargets, deployer, lockPath, env, settingsManager, level, tracer, traceFactory, deploymentLock);
+            }
+            else
+            {
+                // Cross child process lock is not working on linux via mono.
+                // When we reach here, deployment lock must be HELD! To solve above issue, we lock again before continue.
+                int returnCode = -1;
+                deploymentLock.TryLockOperation(() =>
+                {
+                    returnCode = PerformDeploy(appRoot, wapTargets, deployer, lockPath, env, settingsManager, level, tracer, traceFactory, deploymentLock);
+                }, TimeSpan.Zero);
+                return returnCode;
+            }
+        }
+
+        private static int PerformDeploy(
+            string appRoot,
+            string wapTargets,
+            string deployer,
+            string lockPath,
+            IEnvironment env,
+            IDeploymentSettingsManager settingsManager,
+            TraceLevel level,
+            ITracer tracer,
+            ITraceFactory traceFactory,
+            IOperationLock deploymentLock)
+        {
+            System.Environment.SetEnvironmentVariable("GIT_DIR", null, System.EnvironmentVariableTarget.Process);
+
+            // Skip SSL Certificate Validate
+            OperationClient.SkipSslValidationIfNeeded();
+
+            // Adjust repo path
+            env.RepositoryPath = Path.Combine(env.SiteRootPath, settingsManager.GetRepositoryPath());
+
+            string statusLockPath = Path.Combine(lockPath, Constants.StatusLockFile);
+            string hooksLockPath = Path.Combine(lockPath, Constants.HooksLockFile);
 
             IOperationLock statusLock = new LockFile(statusLockPath, traceFactory);
             IOperationLock hooksLock = new LockFile(hooksLockPath, traceFactory);
