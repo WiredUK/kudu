@@ -46,11 +46,11 @@ namespace Kudu.Core.Deployment.Generator
             string project = _deploymentSettings.GetValue(SettingsKeys.Project);
             if (!String.IsNullOrEmpty(project))
             {
-                isInPlace = PathUtility.PathsEquals(Path.Combine(sourcePath, project), targetPath);
+                isInPlace = PathUtilityFactory.Instance.PathsEquals(Path.Combine(sourcePath, project), targetPath);
             }
             else
             {
-                isInPlace = PathUtility.PathsEquals(sourcePath, targetPath);
+                isInPlace = PathUtilityFactory.Instance.PathsEquals(sourcePath, targetPath);
             }
 
             if (isInPlace)
@@ -71,14 +71,14 @@ namespace Kudu.Core.Deployment.Generator
             var exe = new Executable(commandPath, workingDirectory, idleTimeout);
             exe.AddDeploymentSettingsAsEnvironmentVariables(_deploymentSettings);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.WebRootPath, _environment.WebRootPath, logger);
-            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.MSBuildPath, PathUtility.ResolveMSBuildPath(), logger);
+            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.MSBuildPath, PathUtilityFactory.Instance.ResolveMSBuildPath(), logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.KuduSyncCommandKey, KuduSyncCommand, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.NuGetExeCommandKey, NuGetExeCommand, logger);
-            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.NpmJsPathKey, PathUtility.ResolveNpmJsPath(), logger);
+            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.NpmJsPathKey, PathUtilityFactory.Instance.ResolveNpmJsPath(), logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.DnvmPath, DnvmPath, logger);
             UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.GypMsvsVersion, Constants.VCVersion, logger);
-            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.VCTargetsPath, PathUtility.ResolveVCTargetsPath(), logger);
-            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.VCInstallDir140, PathUtility.ResolveVCInstallDirPath(), logger);
+            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.VCTargetsPath, PathUtilityFactory.Instance.ResolveVCTargetsPath(), logger);
+            UpdateToDefaultIfNotSet(exe, WellKnownEnvironmentVariables.VCInstallDir140, PathUtilityFactory.Instance.ResolveVCInstallDirPath(), logger);
 
             exe.SetHomePath(_environment);
 

@@ -71,14 +71,6 @@ namespace Kudu.Core.Infrastructure
         {
             get
             {
-                if (!OSDetecter.IsCurrentOSWindows())
-                {
-                    // BUGGY!!!
-                    // Mono does NOT support file lock accross process, we use file exist as work-around till we find a better way
-                    // https://bugzilla.xamarin.com/show_bug.cgi?id=38201
-                    return FileSystemHelpers.FileExists(_path);
-                }
-                
                 // If there's no file then there's no process holding onto it
                 if (!FileSystemHelpers.FileExists(_path))
                 {
