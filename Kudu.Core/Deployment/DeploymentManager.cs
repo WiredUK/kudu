@@ -21,7 +21,7 @@ namespace Kudu.Core.Deployment
 {
     public class DeploymentManager : IDeploymentManager
     {
-        public readonly static string DeploymentScriptFileName = OSDetecter.IsCurrentOSWindows() ? "deploy.cmd" : "deploy.sh";
+        public readonly static string DeploymentScriptFileName = OSDetecter.IsOnWindows() ? "deploy.cmd" : "deploy.sh";
 
         private static readonly Random _random = new Random();
 

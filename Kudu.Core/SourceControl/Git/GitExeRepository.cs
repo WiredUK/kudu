@@ -6,6 +6,9 @@ using System.Linq;
 using System.Text;
 using Kudu.Contracts.Settings;
 using Kudu.Contracts.Tracing;
+using Kudu.Core.Deployment;
+using Kudu.Core.Deployment.Generator;
+using Kudu.Core.Helpers;
 using Kudu.Core.Infrastructure;
 using Kudu.Core.Tracing;
 
@@ -29,6 +32,7 @@ namespace Kudu.Core.SourceControl.Git
 
         private static readonly string[] _lockFileNames = new[] { "index.lock", "HEAD.lock" };
 
+        private IEnvironment _environment;
         private readonly GitExecutable _gitExe;
         private readonly ITraceFactory _tracerFactory;
         private readonly IDeploymentSettingsManager _settings;
@@ -36,6 +40,7 @@ namespace Kudu.Core.SourceControl.Git
         public GitExeRepository(IEnvironment environment, IDeploymentSettingsManager settings, ITraceFactory profilerFactory)
         {
             _gitExe = new GitExecutable(environment.RepositoryPath, settings.GetCommandIdleTimeout());
+            _environment = environment;
             _tracerFactory = profilerFactory;
             _settings = settings;
             SkipPostReceiveHookCheck = false;
@@ -182,7 +187,18 @@ fi" + "\n";
                     sb.AppendLine("read i");
                     sb.AppendLine("echo $i > pushinfo");
                     sb.AppendLine("/usr/bin/mono " + KnownEnvironment.KUDUCOMMAND);
-                    File.WriteAllText(PostReceiveHookPath, sb.ToString().Replace("\r\n", "\n"));
+                    FileSystemHelpers.WriteAllText(PostReceiveHookPath, sb.ToString().Replace("\r\n", "\n"));
+
+                    if (!OSDetecter.IsOnWindows())
+                    {
+                        using (tracer.Step("Non-Windows enviroment, granting full permission to post-receive hook file"))
+                        {
+                            var hooksDir = new DirectoryInfo(PostReceiveHookPath).Parent;
+                            var exeFactory = new ExternalCommandFactory(_environment, _settings, null);
+                            Executable exe = exeFactory.BuildCommandExecutable("/bin/chmod", hooksDir.FullName, _settings.GetCommandIdleTimeout(), NullLogger.Instance);
+                            exe.Execute("777 {0}", PostReceiveHookPath);
+                        }
+                    }
                 }
 
                 // NOTE: don't add any new init steps after creating the post receive hook,

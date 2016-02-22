@@ -170,7 +170,7 @@ namespace Kudu.Core.Deployment.Generator
         {
             get
             {
-                if (OSDetecter.IsCurrentOSWindows())
+                if (OSDetecter.IsOnWindows())
                 {
                     return Path.Combine(Environment.NodeModulesPath, ".bin", "kuduscript.cmd");
                 }

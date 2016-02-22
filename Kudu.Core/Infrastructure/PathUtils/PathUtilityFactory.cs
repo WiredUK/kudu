@@ -12,7 +12,7 @@ namespace Kudu.Core.Infrastructure
             {
                 if (_utility == null)
                 {
-                    if (OSDetecter.IsCurrentOSWindows())
+                    if (OSDetecter.IsOnWindows())
                     {
                         _utility = new PathWindowsUtility();
                     }

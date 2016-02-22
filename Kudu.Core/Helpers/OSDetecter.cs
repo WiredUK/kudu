@@ -4,7 +4,7 @@ namespace Kudu.Core.Helpers
 {
     public static class OSDetecter
     {
-        public static bool IsCurrentOSWindows()
+        public static bool IsOnWindows()
         {
             switch (System.Environment.OSVersion.Platform)
             {

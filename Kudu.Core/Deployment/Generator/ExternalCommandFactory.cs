@@ -122,7 +122,7 @@ namespace Kudu.Core.Deployment.Generator
         {
             get
             {
-                if (OSDetecter.IsCurrentOSWindows())
+                if (OSDetecter.IsOnWindows())
                 {
                     return Path.Combine(_environment.ScriptPath, StarterScriptName);
                 }
